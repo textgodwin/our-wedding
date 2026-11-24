@@ -57,6 +57,9 @@ section{padding:34px 0}
 .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px;font-size:16px}
 .grid span{padding:5px 0;border-radius:50%}.grid .h{font-size:11px;letter-spacing:.1em;color:var(--gold);font-weight:700}
 .grid .on{background:var(--card);color:var(--cardink);font-weight:700}.grid .trad{border:1px solid var(--card)}
+/* calendar buttons */
+.calbtns{display:flex;flex-direction:column;gap:10px;align-items:center}
+.calbtns .btn{width:100%;max-width:300px;font-size:14px;padding:11px 14px}
 /* swatches */
 .sw{display:flex;justify-content:center;gap:12px;margin:14px 0}.sw i{width:44px;height:44px;border-radius:50%;border:1px solid #bfae94}
 /* timeline */
@@ -107,7 +110,7 @@ footer{padding:24px 0 10px;font-size:15px;opacity:.8}
       <div class="rule"></div>
       <div class="fam">
         <div><b>Groom’s Parents</b>Mr. Awuah Amoah<br>&amp; Emma Duodu</div>
-        <div><b>Bride’s Mother</b>Ms. Theresah<br>Obeng-Darko</div>
+        <div><b>Bride’s Mother</b>Ms. Theresa<br>Obeng-Darko</div>
       </div>
       <p style="font-size:16px;opacity:.85">With great joy, they invite you to celebrate and share in this special day.</p>
     </div>
@@ -128,7 +131,12 @@ footer{padding:24px 0 10px;font-size:15px;opacity:.8}
       <div class="grid" id="grid"></div>
       <p style="font-size:14px;margin-top:10px;opacity:.85"><span style="border:1px solid var(--card);border-radius:50%;padding:0 7px">2</span> Traditional wedding &nbsp; <span style="background:var(--card);color:var(--cardink);border-radius:50%;padding:0 7px">3</span> Wedding &amp; reception</p>
     </div>
-    <a class="btn" target="_blank" rel="noopener" href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Godwin+%26+Rosemary+Wedding&dates=20270403T090000Z/20270403T180000Z&location=St.+Thomas+More+Catholic+Church,+Achimota,+Accra">Add to Calendar</a>
+    <div class="calbtns">
+      <a class="btn" target="_blank" rel="noopener" href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Godwin+%26+Rosemary+Traditional+Marriage&dates=20270402T110000Z/20270402T140000Z&details=Venue+to+be+communicated+by+the+families.">Add Traditional · Fri 2 Apr</a>
+      <a class="btn" target="_blank" rel="noopener" href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Godwin+%26+Rosemary+Wedding+Ceremony&dates=20270403T090000Z/20270403T120000Z&location=St.+Thomas+More+Catholic+Church,+Achimota,+Accra">Add Church Wedding · Sat 3 Apr</a>
+      <a class="btn" target="_blank" rel="noopener" href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Godwin+%26+Rosemary+Reception&dates=20270403T130000Z/20270403T190000Z&location=Eagle+Vault+(The+Eagle+Nest+Event+Facility),+Achimota-Ofankor">Add Reception · Sat 3 Apr</a>
+      <button class="btn line" id="icsBtn" type="button">Download all (Apple / Outlook)</button>
+    </div>
   </section>
 
   <section class="rv">
@@ -189,6 +197,7 @@ footer{padding:24px 0 10px;font-size:15px;opacity:.8}
     <p class="gold" style="letter-spacing:.18em;text-transform:uppercase;font-size:13px;margin-bottom:6px">RSVP Contacts</p>
     <p style="font-size:20px;font-weight:600;margin-bottom:14px"><a href="tel:+233546114219" style="color:inherit;text-decoration:none">+233 54 611 4219</a><br><a href="tel:+233257387595" style="color:inherit;text-decoration:none">+233 25 738 7595</a></p>
     <input id="nm" placeholder="Your full name" autocomplete="name">
+    <input id="ph" type="tel" placeholder="Your phone number (optional)" autocomplete="tel">
     <select id="gs"><option>1 guest</option><option>2 guests</option><option>3 guests</option><option>4 guests</option></select>
     <select id="at"><option>Joyfully attending</option><option>Regretfully unable to attend</option></select>
     <textarea id="wish" rows="2" placeholder="A wish for the couple (optional)" style="width:100%;margin:6px 0;padding:11px 14px;border-radius:10px;border:1px solid #bfae94;font:17px 'Cormorant Garamond',Georgia,serif;background:#fffaf1;color:#4a0d18"></textarea>
@@ -206,6 +215,9 @@ footer{padding:24px 0 10px;font-size:15px;opacity:.8}
 <script>
 // RSVP replies go to this WhatsApp number (international format, digits only)
 var WHATSAPP = "233546114219";
+// Paste your Google Apps Script web app URL here to save RSVPs to a Google Sheet.
+// Leave it empty and replies will go to WhatsApp instead.
+var SHEET_URL = "https://script.google.com/macros/s/AKfycbzhpuQz8T5ZZbFZCyzWfAtOeVq5N41z5OnZnhKFCwa__iR-LM3tuXqPbgzPvuhXQoK7tg/exec";
 var $ = function(id){return document.getElementById(id)};
 
 // Opening card
@@ -266,15 +278,53 @@ tl('tl2', [
  ['Closing Remarks, Prayer & Departure','Final thank-you, closing prayer, and send-off.']
 ]);
 
-// RSVP -> WhatsApp (or share / copy if no number is set)
+// RSVP -> Google Sheet (if SHEET_URL is set), otherwise WhatsApp
+function waText(d){
+  return 'RSVP for Godwin & Rosemary’s wedding (3rd April 2027)\nName: '+d.name+(d.phone?'\nPhone: '+d.phone:'')+'\nGuests: '+d.guests+'\nReply: '+d.attending+(d.wish?'\nWish: '+d.wish:'');
+}
+function openWA(d){ window.open('https://wa.me/'+WHATSAPP+'?text='+encodeURIComponent(waText(d)),'_blank'); }
 $('send').onclick = function(){
-  var name = $('nm').value.trim();
-  if(!name){ $('msg').textContent = 'Please enter your name.'; return; }
-  var w = $('wish').value.trim();
-  var text = 'RSVP for Godwin & Rosemary’s wedding (3rd April 2027)\nName: '+name+'\nGuests: '+$('gs').value+'\nReply: '+$('at').value+(w?'\nWish: '+w:'');
-  if(WHATSAPP){ window.open('https://wa.me/'+WHATSAPP+'?text='+encodeURIComponent(text),'_blank'); return; }
-  if(navigator.share){ navigator.share({text:text}).catch(function(){}); return; }
-  $('msg').textContent = 'Please send this reply to the couple:\n\n'+text;
+  var d = {name:$('nm').value.trim(), phone:$('ph').value.trim(), guests:$('gs').value, attending:$('at').value, wish:$('wish').value.trim()};
+  if(!d.name){ $('msg').textContent = 'Please enter your name.'; return; }
+  if(SHEET_URL){
+    var btn = $('send'); btn.disabled = true; btn.textContent = 'Sending…';
+    fetch(SHEET_URL,{method:'POST',mode:'no-cors',body:new URLSearchParams(d)})
+      .then(function(){
+        $('msg').textContent = 'Thank you, '+d.name+'! Your reply has been received.';
+        $('nm').value='';$('ph').value='';$('wish').value='';
+      })
+      .catch(function(){
+        $('msg').textContent = 'Sorry, we could not send your reply. Opening WhatsApp instead.';
+        openWA(d);
+      })
+      .then(function(){ btn.disabled = false; btn.textContent = 'Send Reply'; });
+    return;
+  }
+  if(WHATSAPP){ openWA(d); return; }
+  if(navigator.share){ navigator.share({text:waText(d)}).catch(function(){}); return; }
+  $('msg').textContent = 'Please send this reply to the couple:\n\n'+waText(d);
+};
+
+// Download all events as a calendar file (.ics) for Apple Calendar / Outlook
+$('icsBtn').onclick = function(){
+  var ev = [
+    ['trad','Godwin & Rosemary - Traditional Marriage','20270402T110000Z','20270402T140000Z','','Venue to be communicated by the families.'],
+    ['church','Godwin & Rosemary - Wedding Ceremony','20270403T090000Z','20270403T120000Z','St. Thomas More Catholic Church, Achimota, Accra',''],
+    ['reception','Godwin & Rosemary - Reception','20270403T130000Z','20270403T190000Z','Eagle Vault (The Eagle Nest Event Facility), Achimota-Ofankor','']
+  ];
+  var esc = function(t){return t.replace(/,/g,'\\,')};
+  var L = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Godwin and Rosemary//Wedding//EN'];
+  ev.forEach(function(e){
+    L.push('BEGIN:VEVENT','UID:'+e[0]+'-20270403@godwin-rosemary-wedding','DTSTAMP:20260101T000000Z','DTSTART:'+e[2],'DTEND:'+e[3],'SUMMARY:'+esc(e[1]));
+    if(e[4]) L.push('LOCATION:'+esc(e[4]));
+    if(e[5]) L.push('DESCRIPTION:'+esc(e[5]));
+    L.push('END:VEVENT');
+  });
+  L.push('END:VCALENDAR');
+  var blob = new Blob([L.join('\r\n')],{type:'text/calendar'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'Godwin-Rosemary-Wedding.ics';
+  document.body.appendChild(a); a.click(); a.remove();
 };
 
 // Gallery: stacked cards, swipe or auto-advance
